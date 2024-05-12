@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <numeric>
 #include "memplumber.h"
 #include "PcppTestFrameworkCommon.h"
 
@@ -63,6 +64,31 @@
 		auto ptfExpected = static_cast<decltype(ptfActual)>(expected); \
 		if (ptfActual != ptfExpected) { \
 			PTF_PRINT_COMPARE_ASSERTION_FAILED("EQUAL", #actual, ptfActual, #expected, ptfExpected, __VA_ARGS__); \
+			ptfResult = PTF_RESULT_FAILED; \
+			return; \
+		} \
+	}
+
+#define PTF_ASSERT_VECTORS_EQUAL(actual, expected, ...) \
+	{ \
+		if (actual != expected) {\
+			auto actualValues = "[" + std::accumulate( \
+				std::next(actual.begin()),\
+				actual.end(), \
+				actual[0], \
+				[](std::string a, std::string b) { \
+					return a + ", " + b; \
+				}\
+			) + "]"; \
+			auto expectedValues = "[" + std::accumulate( \
+				std::next(expected.begin()),\
+				expected.end(), \
+				expected[0], \
+				[](std::string a, std::string b) { \
+					return a + ", " + b; \
+				}\
+			) + "]"; \
+			PTF_PRINT_COMPARE_ASSERTION_FAILED("VECTORS EQUAL", #actual, actualValues, #expected, expectedValues, __VA_ARGS__); \
 			ptfResult = PTF_RESULT_FAILED; \
 			return; \
 		} \

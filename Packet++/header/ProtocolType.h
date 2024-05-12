@@ -342,6 +342,11 @@ namespace pcpp
 	 */
 	const ProtocolType SMTP = 54;
 
+	/*
+	 * SMTP protocol
+	 */
+	const ProtocolType LDAP = 55;
+
 	/**
 	 * An enum representing OSI model layers
 	 */
