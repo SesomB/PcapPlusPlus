@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <numeric>
 #include "memplumber.h"
 #include "PcppTestFrameworkCommon.h"
@@ -72,22 +73,21 @@
 #define PTF_ASSERT_VECTORS_EQUAL(actual, expected, ...) \
 	{ \
 		if (actual != expected) {\
-			auto actualValues = "[" + std::accumulate( \
-				std::next(actual.begin()),\
-				actual.end(), \
-				actual[0], \
-				[](std::string a, std::string b) { \
-					return a + ", " + b; \
-				}\
-			) + "]"; \
-			auto expectedValues = "[" + std::accumulate( \
-				std::next(expected.begin()),\
-				expected.end(), \
-				expected[0], \
-				[](std::string a, std::string b) { \
-					return a + ", " + b; \
-				}\
-			) + "]"; \
+			std::ostringstream actualOss, expectedOss; \
+			bool first = true; \
+			for (const auto& elem : actual) { \
+				if (!first) actualOss << ", "; \
+				actualOss << elem; \
+				first = false; \
+			} \
+			first = true; \
+			for (const auto& elem : expected) { \
+				if (!first) expectedOss << ", "; \
+				expectedOss << elem; \
+				first = false; \
+			} \
+			std::string actualValues = "[" + actualOss.str() + "]"; \
+			std::string expectedValues = "[" + expectedOss.str() + "]"; \
 			PTF_PRINT_COMPARE_ASSERTION_FAILED("VECTORS EQUAL", #actual, actualValues, #expected, expectedValues, __VA_ARGS__); \
 			ptfResult = PTF_RESULT_FAILED; \
 			return; \

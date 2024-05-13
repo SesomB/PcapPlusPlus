@@ -2,7 +2,7 @@
 
 #include "Layer.h"
 #include "Asn1Codec.h"
-#include <sstream>
+#include <ostream>
 #include <string>
 
 namespace pcpp
@@ -192,6 +192,11 @@ namespace pcpp
 	{
 		std::string type;
 		std::vector<std::string> values;
+
+		bool operator==(const LdapPartialAttribute& other) const
+		{
+			return type == other.type && values == other.values;
+		}
 	};
 
 	class LdapSearchRequestLayer : public LdapLayer
@@ -318,3 +323,17 @@ namespace pcpp
 		std::vector<LdapPartialAttribute> getAttributes() const;
 	};
 } // namespace pcpp
+
+inline std::ostream& operator<<(std::ostream& os, const pcpp::LdapPartialAttribute& attr)
+{
+	std::string valuesStream;
+	bool first = true;
+	for (const auto& value : attr.values)
+	{
+		if (!first) valuesStream += ", ";
+		valuesStream += value;
+		first = false;
+	}
+	os << "{" << attr.type << ", {" << valuesStream << "}}";
+	return os;
+}

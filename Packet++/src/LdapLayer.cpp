@@ -126,7 +126,7 @@ namespace pcpp
 	{
 		std::vector<LdapPartialAttribute> result;
 
-		auto attributes = getMessageRecord()->getSubRecords().at(0)->castAs<Asn1SequenceRecord>();
+		auto attributes = getMessageRecord()->getSubRecords().at(1)->castAs<Asn1SequenceRecord>();
 		for (auto attributeRecord : attributes->getSubRecords())
 		{
 			auto attrAsSequence = attributeRecord->castAs<Asn1SequenceRecord>();

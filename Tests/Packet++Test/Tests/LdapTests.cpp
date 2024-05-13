@@ -50,6 +50,26 @@ PTF_TEST_CASE(LdapParsingTest)
 	PTF_ASSERT_EQUAL(searchResultEntryLayer->getMessageID(), 16);
 	PTF_ASSERT_EQUAL(searchResultEntryLayer->getLdapOperationType(), pcpp::LdapOperationType::SearchResultEntry, enum);
 	PTF_ASSERT_EQUAL(searchResultEntryLayer->getObjectName(), "cn=b.smith,ou=ldap3-tutorial,dc=demo1,dc=freeipa,dc=org");
+	std::vector<pcpp::LdapPartialAttribute> expectedPartialAttributes = {
+		{"objectclass", {"inetOrgPerson", "organizationalPerson", "person", "top"}},
+		{"sn", {"Young"}},
+		{"cn", {"b.smith"}},
+		{"givenname", {"Beatrix"}}
+	};
+	PTF_ASSERT_VECTORS_EQUAL(searchResultEntryLayer->getAttributes(), expectedPartialAttributes);
+
+//	// Test tryGet
+//
+//	buffer1[127] = 0x31;
+//	pcpp::Packet malformedSearchRequestPacket(&rawPacket1);
+//	auto malformedSearchRequestLayer = malformedSearchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
+//	PTF_ASSERT_NOT_NULL(malformedSearchRequestLayer);
+//	uint16_t messageId;
+//	PTF_ASSERT_TRUE(malformedSearchRequestLayer->tryGet([](const pcpp::LdapSearchRequestLayer& obj) -> uint16_t { return obj.getMessageID(); }, messageId));
+//	PTF_ASSERT_EQUAL(messageId, 9);
+//	PTF_ASSERT_FALSE(malformedSearchRequestLayer->tryGet(static_cast<pcpp::LdapSearchRequestLayer::SearchRequestScope (pcpp::LdapLayer::*)() const>(&pcpp::LdapSearchRequestLayer::getScope, x)));
+
+	buffer1[127] = 0x30; // restore
 
 	// Negative tests
 
