@@ -391,7 +391,11 @@ void TcpLayer::parseNextLayer()
 	else if (SmtpLayer::isSmtpPort(portDst) && SmtpLayer::isDataValid(payload, payloadLen))
 		m_NextLayer = new SmtpRequestLayer(payload, payloadLen, this, m_Packet);
 	else if (LdapLayer::isLdapPort(portDst) || LdapLayer::isLdapPort(portSrc))
+	{
 		m_NextLayer = LdapLayer::parseLdapMessage(payload, payloadLen, this, m_Packet);
+		if (!m_NextLayer)
+			m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
+	}
 	else
 		m_NextLayer = new PayloadLayer(payload, payloadLen, this, m_Packet);
 }

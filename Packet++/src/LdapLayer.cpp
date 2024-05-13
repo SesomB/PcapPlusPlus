@@ -13,29 +13,34 @@ namespace pcpp
 	std::string LdapLayer::toString() const
 	{
 		auto extendedInfo = getExtendedStringInfo();
-		return "LDAP Layer, " + getLdapOperationTypeAsString() + (extendedInfo.empty() ? "" : ", " + extendedInfo);
+		return "LDAP Layer, " + getLdapOperationType().toString() + (extendedInfo.empty() ? "" : ", " + extendedInfo);
 	}
 
 	LdapLayer* LdapLayer::parseLdapMessage(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 	{
-		//TODO: catch all possible exceptions
-
-		auto asn1Record = Asn1Record::decode(data, dataLen, false);
-		auto operationType = static_cast<LdapOperationType>(asn1Record->castAs<Asn1SequenceRecord>()->getSubRecords().at(1)->getTagType());
-		switch (operationType)
+		try
 		{
-			case LdapOperationType::SearchRequest:
+			auto asn1Record = Asn1Record::decode(data, dataLen, true);
+			auto operationType = LdapOperationType::fromIntValue(asn1Record->castAs<Asn1SequenceRecord>()->getSubRecords().at(1)->getTagType());
+			switch (operationType)
 			{
-				return new LdapSearchRequestLayer(asn1Record, data, dataLen, prevLayer, packet);
+				case LdapOperationType::SearchRequest:
+				{
+					return new LdapSearchRequestLayer(asn1Record, data, dataLen, prevLayer, packet);
+				}
+				case LdapOperationType::SearchResultEntry:
+				{
+					return new LdapSearchResultEntryLayer(asn1Record, data, dataLen, prevLayer, packet);
+				}
+				default:
+				{
+					return nullptr;
+				}
 			}
-			case LdapOperationType::SearchResultEntry:
-			{
-				return new LdapSearchResultEntryLayer(asn1Record, data, dataLen, prevLayer, packet);
-			}
-			default:
-			{
-				return nullptr;
-			}
+		}
+		catch (...)
+		{
+			return nullptr;
 		}
 	}
 
@@ -56,103 +61,7 @@ namespace pcpp
 
 	LdapOperationType LdapLayer::getLdapOperationType() const
 	{
-		// TODO: check the enum value
-		return static_cast<LdapOperationType>(getMessageRecord()->getTagType());
-	}
-
-	std::string LdapLayer::getLdapOperationTypeAsString() const
-	{
-		switch (getLdapOperationType())
-		{
-			case LdapOperationType::BindRequest:
-			{
-				return "BindRequest";
-			}
-			case LdapOperationType::BindResponse:
-			{
-				return "BindResponse";
-			}
-			case LdapOperationType::UnbindRequest:
-			{
-				return "UnbindRequest";
-			}
-			case LdapOperationType::SearchRequest:
-			{
-				return "SearchRequest";
-			}
-			case LdapOperationType::SearchResultEntry:
-			{
-				return "SearchResultEntry";
-			}
-			case LdapOperationType::SearchResultDone:
-			{
-				return "SearchResultDone";
-			}
-			case LdapOperationType::ModifyRequest:
-			{
-				return "ModifyRequest";
-			}
-			case LdapOperationType::ModifyResponse:
-			{
-				return "ModifyResponse";
-			}
-			case LdapOperationType::AddRequest:
-			{
-				return "AddRequest";
-			}
-			case LdapOperationType::AddResponse:
-			{
-				return "AddResponse";
-			}
-			case LdapOperationType::DelRequest:
-			{
-				return "DelRequest";
-			}
-			case LdapOperationType::DelResponse:
-			{
-				return "DelResponse";
-			}
-			case LdapOperationType::ModifyDNRequest:
-			{
-				return "ModifyDNRequest";
-			}
-			case LdapOperationType::ModifyDNResponse:
-			{
-				return "ModifyDNResponse";
-			}
-			case LdapOperationType::CompareRequest:
-			{
-				return "CompareRequest";
-			}
-			case LdapOperationType::CompareResponse:
-			{
-				return "CompareResponse";
-			}
-			case LdapOperationType::AbandonRequest:
-			{
-				return "AbandonRequest";
-			}
-			case LdapOperationType::SearchResultReference:
-			{
-				return "SearchResultReference";
-			}
-			case LdapOperationType::ExtendedRequest:
-			{
-				return "ExtendedRequest";
-			}
-			case LdapOperationType::ExtendedResponse:
-			{
-				return "ExtendedResponse";
-			}
-			case LdapOperationType::IntermediateResponse:
-			{
-				return "IntermediateResponse";
-			}
-			default:
-			{
-				return "Unknown";
-			}
-		}
+		return LdapOperationType::fromIntValue(getMessageRecord()->getTagType());
 	}
 
 	std::string LdapSearchRequestLayer::getBaseObject() const
@@ -162,14 +71,12 @@ namespace pcpp
 
 	LdapSearchRequestLayer::SearchRequestScope LdapSearchRequestLayer::getScope() const
 	{
-		// TODO: check enum value
-		return static_cast<LdapSearchRequestLayer::SearchRequestScope>(getMessageRecord()->getSubRecords().at(1)->castAs<Asn1EnumeratedRecord>()->getValue());
+		return LdapSearchRequestLayer::SearchRequestScope::fromIntValue(getMessageRecord()->getSubRecords().at(1)->castAs<Asn1EnumeratedRecord>()->getValue());
 	}
 
 	LdapSearchRequestLayer::DerefAliases LdapSearchRequestLayer::getDerefAlias() const
 	{
-		// TODO: check enum value
-		return static_cast<LdapSearchRequestLayer::DerefAliases>(getMessageRecord()->getSubRecords().at(2)->castAs<Asn1EnumeratedRecord>()->getValue());
+		return LdapSearchRequestLayer::DerefAliases::fromIntValue(getMessageRecord()->getSubRecords().at(2)->castAs<Asn1EnumeratedRecord>()->getValue());
 	}
 
 	uint8_t LdapSearchRequestLayer::getSizeLimit() const
@@ -201,38 +108,13 @@ namespace pcpp
 
 	std::string LdapSearchRequestLayer::getExtendedStringInfo() const
 	{
-		std::string scope = "";
-		switch (getScope())
-		{
-			case SearchRequestScope::BaseObject:
-			{
-				scope = "BaseObject";
-				break;
-			}
-			case SearchRequestScope::SingleLevel:
-			{
-				scope = "SingleLevel";
-				break;
-			}
-			case SearchRequestScope::WholeSubtree:
-			{
-				scope = "WholeSubtree";
-				break;
-			}
-			default:
-			{
-				scope = "Unknown";
-				break;
-			}
-		}
-
 		auto baseObject = getBaseObject();
 		if (baseObject.empty())
 		{
 			baseObject = "ROOT";
 		}
 
-		return "\"" + getBaseObject() + "\", " + scope;
+		return "\"" + baseObject + "\", " + getScope().toString();
 	}
 
 	std::string LdapSearchResultEntryLayer::getObjectName() const
