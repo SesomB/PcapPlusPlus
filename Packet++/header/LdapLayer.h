@@ -186,6 +186,17 @@ namespace pcpp
 		Asn1SequenceRecord* getAsn1Record() const;
 		Asn1ConstructedRecord* getMessageRecord() const;
 		virtual std::string getExtendedStringInfo() const {return ""; }
+
+		template <typename T, typename Member, typename LdapClass>
+		bool internalTryGet(LdapClass* thisPtr, Member member, T& result) {
+			try {
+				result = (thisPtr->*member)();
+				return true;
+			}
+			catch (...) {
+				return false;
+			}
+		}
 	};
 
 	struct LdapPartialAttribute
@@ -309,6 +320,12 @@ namespace pcpp
 		// TODO: std::string getFilter();
 		std::vector<std::string> getAttributes() const;
 
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+
 	protected:
 		std::string getExtendedStringInfo() const override;
 	};
@@ -321,6 +338,12 @@ namespace pcpp
 
 		std::string getObjectName() const;
 		std::vector<LdapPartialAttribute> getAttributes() const;
+
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
 	};
 } // namespace pcpp
 

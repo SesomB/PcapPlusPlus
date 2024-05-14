@@ -58,17 +58,17 @@ PTF_TEST_CASE(LdapParsingTest)
 	};
 	PTF_ASSERT_VECTORS_EQUAL(searchResultEntryLayer->getAttributes(), expectedPartialAttributes);
 
-//	// Test tryGet
-//
-//	buffer1[127] = 0x31;
-//	pcpp::Packet malformedSearchRequestPacket(&rawPacket1);
-//	auto malformedSearchRequestLayer = malformedSearchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
-//	PTF_ASSERT_NOT_NULL(malformedSearchRequestLayer);
-//	uint16_t messageId;
-//	PTF_ASSERT_TRUE(malformedSearchRequestLayer->tryGet([](const pcpp::LdapSearchRequestLayer& obj) -> uint16_t { return obj.getMessageID(); }, messageId));
-//	PTF_ASSERT_EQUAL(messageId, 9);
-//	PTF_ASSERT_FALSE(malformedSearchRequestLayer->tryGet(static_cast<pcpp::LdapSearchRequestLayer::SearchRequestScope (pcpp::LdapLayer::*)() const>(&pcpp::LdapSearchRequestLayer::getScope, x)));
+	// Test tryGet
 
+	buffer1[127] = 0x31;
+	pcpp::Packet malformedSearchRequestPacket(&rawPacket1);
+	auto malformedSearchRequestLayer = malformedSearchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
+	PTF_ASSERT_NOT_NULL(malformedSearchRequestLayer);
+	uint16_t messageId;
+	PTF_ASSERT_TRUE(malformedSearchRequestLayer->tryGet(&pcpp::LdapSearchRequestLayer::getMessageID, messageId));
+	PTF_ASSERT_EQUAL(messageId, 9);
+	std::vector<std::string> attrs;
+	PTF_ASSERT_FALSE(malformedSearchRequestLayer->tryGet(&pcpp::LdapSearchRequestLayer::getAttributes, attrs));
 	buffer1[127] = 0x30; // restore
 
 	// Negative tests
