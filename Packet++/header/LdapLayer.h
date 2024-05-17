@@ -147,6 +147,244 @@ namespace pcpp
 		Value m_Value;
 	};
 
+	class LdapResultCode
+	{
+	public:
+		enum Value : uint8_t
+		{
+			Success = 0,
+			OperationsError= 1,
+			ProtocolError = 2,
+			TimeLimitExceeded = 3,
+			SizeLimitExceeded = 4,
+			CompareFalse = 5,
+			CompareTrue = 6,
+			AuthMethodNotSupported = 7,
+			StrongerAuthRequired = 8,
+			// 9 reserved
+			Referral = 10,
+			AdminLimitExceeded = 11,
+			UnavailableCriticalExtension = 12,
+			ConfidentialityRequired = 13,
+			SaslBindInProgress = 14,
+			NoSuchAttribute = 16,
+			UndefinedAttributeType = 17,
+			InappropriateMatching = 18,
+			ConstraintViolation = 19,
+			AttributeOrValueExists = 20,
+			InvalidAttributeSyntax = 21,
+			// 22-31 unused
+			NoSuchObject = 32,
+			AliasProblem = 33,
+			InvalidDNSyntax = 34,
+			// 35 reserved for undefined isLeaf
+			AliasDereferencingProblem = 36,
+			// 37-47 unused
+			InappropriateAuthentication = 48,
+			InvalidCredentials = 49,
+			InsufficientAccessRights = 50,
+			Busy = 51,
+			Unavailable = 52,
+			UnwillingToPerform = 53,
+			LoopDetect = 54,
+			// 55-63 unused
+			NamingViolation = 64,
+			ObjectClassViolation = 65,
+			NotAllowedOnNonLeaf = 66,
+			NotAllowedOnRDN = 67,
+			EntryAlreadyExists = 68,
+			ObjectClassModsProhibited = 69,
+			// 70 reserved for CLDAP
+			AffectsMultipleDSAs = 71,
+			// 72-79 unused
+			Other = 80,
+			Unknown = 255
+		};
+
+		LdapResultCode() = default;
+		constexpr LdapResultCode(Value value) : m_Value(value) { }
+		constexpr operator Value() const { return m_Value; }
+
+		// Prevent usage: if(LdapResultCode)
+		explicit operator bool() const = delete;
+
+		std::string toString() const
+		{
+			switch (m_Value)
+			{
+				case LdapResultCode::Success:
+					return "Success";
+				case LdapResultCode::OperationsError:
+					return "OperationsError";
+				case LdapResultCode::ProtocolError:
+					return "ProtocolError";
+				case LdapResultCode::TimeLimitExceeded:
+					return "TimeLimitExceeded";
+				case LdapResultCode::SizeLimitExceeded:
+					return "SizeLimitExceeded";
+				case LdapResultCode::CompareFalse:
+					return "CompareFalse";
+				case LdapResultCode::CompareTrue:
+					return "CompareTrue";
+				case LdapResultCode::AuthMethodNotSupported:
+					return "AuthMethodNotSupported";
+				case LdapResultCode::StrongerAuthRequired:
+					return "StrongerAuthRequired";
+				case LdapResultCode::Referral:
+					return "Referral";
+				case LdapResultCode::AdminLimitExceeded:
+					return "AdminLimitExceeded";
+				case LdapResultCode::UnavailableCriticalExtension:
+					return "UnavailableCriticalExtension";
+				case LdapResultCode::ConfidentialityRequired:
+					return "ConfidentialityRequired";
+				case LdapResultCode::SaslBindInProgress:
+					return "SaslBindInProgress";
+				case LdapResultCode::NoSuchAttribute:
+					return "NoSuchAttribute";
+				case LdapResultCode::UndefinedAttributeType:
+					return "UndefinedAttributeType";
+				case LdapResultCode::InappropriateMatching:
+					return "InappropriateMatching";
+				case LdapResultCode::ConstraintViolation:
+					return "ConstraintViolation";
+				case LdapResultCode::AttributeOrValueExists:
+					return "AttributeOrValueExists";
+				case LdapResultCode::InvalidAttributeSyntax:
+					return "InvalidAttributeSyntax";
+				case LdapResultCode::NoSuchObject:
+					return "NoSuchObject";
+				case LdapResultCode::AliasProblem:
+					return "AliasProblem";
+				case LdapResultCode::InvalidDNSyntax:
+					return "InvalidDNSyntax";
+				case LdapResultCode::AliasDereferencingProblem:
+					return "AliasDereferencingProblem";
+				case LdapResultCode::InappropriateAuthentication:
+					return "InappropriateAuthentication";
+				case LdapResultCode::InvalidCredentials:
+					return "InvalidCredentials";
+				case LdapResultCode::InsufficientAccessRights:
+					return "InsufficientAccessRights";
+				case LdapResultCode::Busy:
+					return "Busy";
+				case LdapResultCode::Unavailable:
+					return "Unavailable";
+				case LdapResultCode::UnwillingToPerform:
+					return "UnwillingToPerform";
+				case LdapResultCode::LoopDetect:
+					return "LoopDetect";
+				case LdapResultCode::NamingViolation:
+					return "NamingViolation";
+				case LdapResultCode::ObjectClassViolation:
+					return "ObjectClassViolation";
+				case LdapResultCode::NotAllowedOnNonLeaf:
+					return "NotAllowedOnNonLeaf";
+				case LdapResultCode::NotAllowedOnRDN:
+					return "NotAllowedOnRDN";
+				case LdapResultCode::EntryAlreadyExists:
+					return "EntryAlreadyExists";
+				case LdapResultCode::ObjectClassModsProhibited:
+					return "ObjectClassModsProhibited";
+				case LdapResultCode::AffectsMultipleDSAs:
+					return "AffectsMultipleDSAs";
+				case LdapResultCode::Other:
+					return "Other";
+				default:
+					return "Unknown";
+			}
+		}
+
+		static LdapResultCode fromIntValue(uint8_t value)
+		{
+			switch (value)
+			{
+				case static_cast<uint8_t>(LdapResultCode::Success):
+					return LdapResultCode::Success;
+				case static_cast<uint8_t>(LdapResultCode::OperationsError):
+					return LdapResultCode::OperationsError;
+				case static_cast<uint8_t>(LdapResultCode::ProtocolError):
+					return LdapResultCode::ProtocolError;
+				case static_cast<uint8_t>(LdapResultCode::TimeLimitExceeded):
+					return LdapResultCode::TimeLimitExceeded;
+				case static_cast<uint8_t>(LdapResultCode::SizeLimitExceeded):
+					return LdapResultCode::SizeLimitExceeded;
+				case static_cast<uint8_t>(LdapResultCode::CompareFalse):
+					return LdapResultCode::CompareFalse;
+				case static_cast<uint8_t>(LdapResultCode::CompareTrue):
+					return LdapResultCode::CompareTrue;
+				case static_cast<uint8_t>(LdapResultCode::AuthMethodNotSupported):
+					return LdapResultCode::AuthMethodNotSupported;
+				case static_cast<uint8_t>(LdapResultCode::StrongerAuthRequired):
+					return LdapResultCode::StrongerAuthRequired;
+				case static_cast<uint8_t>(LdapResultCode::Referral):
+					return LdapResultCode::Referral;
+				case static_cast<uint8_t>(LdapResultCode::AdminLimitExceeded):
+					return LdapResultCode::AdminLimitExceeded;
+				case static_cast<uint8_t>(LdapResultCode::UnavailableCriticalExtension):
+					return LdapResultCode::UnavailableCriticalExtension;
+				case static_cast<uint8_t>(LdapResultCode::ConfidentialityRequired):
+					return LdapResultCode::ConfidentialityRequired;
+				case static_cast<uint8_t>(LdapResultCode::SaslBindInProgress):
+					return LdapResultCode::SaslBindInProgress;
+				case static_cast<uint8_t>(LdapResultCode::NoSuchAttribute):
+					return LdapResultCode::NoSuchAttribute;
+				case static_cast<uint8_t>(LdapResultCode::UndefinedAttributeType):
+					return LdapResultCode::UndefinedAttributeType;
+				case static_cast<uint8_t>(LdapResultCode::InappropriateMatching):
+					return LdapResultCode::InappropriateMatching;
+				case static_cast<uint8_t>(LdapResultCode::ConstraintViolation):
+					return LdapResultCode::ConstraintViolation;
+				case static_cast<uint8_t>(LdapResultCode::AttributeOrValueExists):
+					return LdapResultCode::AttributeOrValueExists;
+				case static_cast<uint8_t>(LdapResultCode::InvalidAttributeSyntax):
+					return LdapResultCode::InvalidAttributeSyntax;
+				case static_cast<uint8_t>(LdapResultCode::NoSuchObject):
+					return LdapResultCode::NoSuchObject;
+				case static_cast<uint8_t>(LdapResultCode::AliasProblem):
+					return LdapResultCode::AliasProblem;
+				case static_cast<uint8_t>(LdapResultCode::InvalidDNSyntax):
+					return LdapResultCode::InvalidDNSyntax;
+				case static_cast<uint8_t>(LdapResultCode::AliasDereferencingProblem):
+					return LdapResultCode::AliasDereferencingProblem;
+				case static_cast<uint8_t>(LdapResultCode::InappropriateAuthentication):
+					return LdapResultCode::InappropriateAuthentication;
+				case static_cast<uint8_t>(LdapResultCode::InvalidCredentials):
+					return LdapResultCode::InvalidCredentials;
+				case static_cast<uint8_t>(LdapResultCode::InsufficientAccessRights):
+					return LdapResultCode::InsufficientAccessRights;
+				case static_cast<uint8_t>(LdapResultCode::Busy):
+					return LdapResultCode::Busy;
+				case static_cast<uint8_t>(LdapResultCode::Unavailable):
+					return LdapResultCode::Unavailable;
+				case static_cast<uint8_t>(LdapResultCode::UnwillingToPerform):
+					return LdapResultCode::UnwillingToPerform;
+				case static_cast<uint8_t>(LdapResultCode::LoopDetect):
+					return LdapResultCode::LoopDetect;
+				case static_cast<uint8_t>(LdapResultCode::NamingViolation):
+					return LdapResultCode::NamingViolation;
+				case static_cast<uint8_t>(LdapResultCode::ObjectClassViolation):
+					return LdapResultCode::ObjectClassViolation;
+				case static_cast<uint8_t>(LdapResultCode::NotAllowedOnNonLeaf):
+					return LdapResultCode::NotAllowedOnNonLeaf;
+				case static_cast<uint8_t>(LdapResultCode::NotAllowedOnRDN):
+					return LdapResultCode::NotAllowedOnRDN;
+				case static_cast<uint8_t>(LdapResultCode::EntryAlreadyExists):
+					return LdapResultCode::EntryAlreadyExists;
+				case static_cast<uint8_t>(LdapResultCode::ObjectClassModsProhibited):
+					return LdapResultCode::ObjectClassModsProhibited;
+				case static_cast<uint8_t>(LdapResultCode::AffectsMultipleDSAs):
+					return LdapResultCode::AffectsMultipleDSAs;
+				case static_cast<uint8_t>(LdapResultCode::Other):
+					return LdapResultCode::Other;
+				default:
+					return LdapResultCode::Unknown;
+			}
+		}
+	private:
+		Value m_Value;
+	};
+
 	/**
 	 * @class LdapLayer
 	 * TBD
@@ -190,12 +428,15 @@ namespace pcpp
 		virtual std::string getExtendedStringInfo() const {return ""; }
 
 		template <typename T, typename Member, typename LdapClass>
-		bool internalTryGet(LdapClass* thisPtr, Member member, T& result) {
-			try {
+		bool internalTryGet(LdapClass* thisPtr, Member member, T& result)
+		{
+			try
+			{
 				result = (thisPtr->*member)();
 				return true;
 			}
-			catch (...) {
+			catch (...)
+			{
 				return false;
 			}
 		}
@@ -209,6 +450,19 @@ namespace pcpp
 		bool operator==(const LdapPartialAttribute& other) const
 		{
 			return type == other.type && values == other.values;
+		}
+	};
+
+	struct LdapResult
+	{
+		LdapResultCode resultCode;
+		std::string matchedDN;
+		std::string diagnosticMessage;
+		std::string referral;
+
+		bool operator==(const LdapResult& other) const
+		{
+			return resultCode == other.resultCode && matchedDN == other.matchedDN && diagnosticMessage == other.diagnosticMessage && referral == other.referral;
 		}
 	};
 
@@ -346,6 +600,24 @@ namespace pcpp
 
 		std::string getObjectName() const;
 		std::vector<LdapPartialAttribute> getAttributes() const;
+
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+	};
+
+	class LdapSearchResultDoneLayer : public LdapLayer
+	{
+	public:
+		LdapSearchResultDoneLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapSearchResultDoneLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+			const std::string& diagnosticMessage, const std::string& referral = "");
+
+		LdapResult getResult() const;
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)

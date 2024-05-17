@@ -9,14 +9,11 @@ PTF_TEST_CASE(LdapParsingTest)
 	timeval time;
 	gettimeofday(&time, nullptr);
 
-	READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
-	READ_FILE_AND_CREATE_PACKET(2, "PacketExamples/ldap_search_res_entry.dat");
-
-	pcpp::Packet searchRequestPacket(&rawPacket1);
-	pcpp::Packet searchResEntryPacket(&rawPacket2);
-
 	// SearchRequest
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
+		pcpp::Packet searchRequestPacket(&rawPacket1);
+
 		auto searchRequestLayer = searchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
 		PTF_ASSERT_NOT_NULL(searchRequestLayer);
 		PTF_ASSERT_EQUAL(searchRequestLayer->getMessageID(), 9);
@@ -46,8 +43,11 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_VECTORS_EQUAL(attributes, expectedAttributes);
 	}
 
-	// SearchResEntry
+	// SearchResultEntry
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_res_entry.dat");
+		pcpp::Packet searchResEntryPacket(&rawPacket1);
+
 		auto searchResultEntryLayer = searchResEntryPacket.getLayerOfType<pcpp::LdapSearchResultEntryLayer>();
 		PTF_ASSERT_NOT_NULL(searchResultEntryLayer);
 		PTF_ASSERT_EQUAL(searchResultEntryLayer->getMessageID(), 16);
@@ -62,8 +62,21 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_VECTORS_EQUAL(searchResultEntryLayer->getAttributes(), expectedPartialAttributes);
 	}
 
+	// SearchResultDone
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_res_done.dat");
+		pcpp::Packet searchReusltDonePacket(&rawPacket1);
+
+		auto searchResultDoneLayer = searchReusltDonePacket.getLayerOfType<pcpp::LdapSearchResultDoneLayer>();
+		PTF_ASSERT_NOT_NULL(searchResultDoneLayer);
+		PTF_ASSERT_EQUAL(searchResultDoneLayer->getMessageID(), 25);
+		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
+		PTF_ASSERT_TRUE(searchResultDoneLayer->getResult() == expectedResult);
+	}
+
 	// Test tryGet
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
 		buffer1[127] = 0x31;
 		pcpp::Packet malformedSearchRequestPacket(&rawPacket1);
 		auto malformedSearchRequestLayer = malformedSearchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
@@ -73,36 +86,35 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(messageId, 9);
 		std::vector<std::string> attrs;
 		PTF_ASSERT_FALSE(malformedSearchRequestLayer->tryGet(&pcpp::LdapSearchRequestLayer::getAttributes, attrs));
-		buffer1[127] = 0x30; // restore
 	}
 
 	// Negative tests
 
 	// Unknown LDAP operation type (30)
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
 		buffer1[72] = 0x7e;
 		pcpp::Packet unknownLdapOperationTypePacket(&rawPacket1);
 		PTF_ASSERT_NULL(unknownLdapOperationTypePacket.getLayerOfType<pcpp::LdapSearchRequestLayer>());
 		PTF_ASSERT_NULL(unknownLdapOperationTypePacket.getLayerOfType<pcpp::LdapLayer>());
-		buffer1[72] = 0x63; // restore
 	}
 
 	// Root record isn't an ASN.1 sequence (but a set)
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
 		buffer1[66] = 0x31;
 		pcpp::Packet unexpectedRootAsn1RecordPacket(&rawPacket1);
 		PTF_ASSERT_NULL(unexpectedRootAsn1RecordPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>());
 		PTF_ASSERT_NULL(unexpectedRootAsn1RecordPacket.getLayerOfType<pcpp::LdapLayer>());
-		buffer1[66] = 0x30; // restore
 	}
 
 	// Bad ASN.1 data
 	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
 		buffer1[68] = 0x01;
 		pcpp::Packet badAsn1Packet(&rawPacket1);
 		PTF_ASSERT_NULL(badAsn1Packet.getLayerOfType<pcpp::LdapSearchRequestLayer>());
 		PTF_ASSERT_NULL(badAsn1Packet.getLayerOfType<pcpp::LdapLayer>());
-		buffer1[68] = 0xe1; // restore
 	}
 } // LdapParsingTest
 
@@ -146,7 +158,7 @@ PTF_TEST_CASE(LdapCreationTest)
 		                       expectedSearchRequestLayer->getDataLen());
 	}
 
-	// SearchResEntry
+	// SearchResultEntry
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_res_entry.dat");
 		pcpp::Packet searchResultEntryPacket(&rawPacket1);
@@ -165,5 +177,19 @@ PTF_TEST_CASE(LdapCreationTest)
 
 		PTF_ASSERT_BUF_COMPARE(searchResultEntryLayer.getData(), expectedSearchResultEntryLayer->getData(),
 		                       expectedSearchResultEntryLayer->getDataLen());
+	}
+
+	// SearchResultDone
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_res_done.dat");
+		pcpp::Packet searchResultDonePacket(&rawPacket1);
+
+		pcpp::LdapSearchResultDoneLayer searchResultDoneLayer(25, pcpp::LdapResultCode::Success, "", "");
+
+		auto expectedSearchResultDoneLayer = searchResultDonePacket.getLayerOfType<pcpp::LdapSearchResultDoneLayer>();
+		PTF_ASSERT_NOT_NULL(expectedSearchResultDoneLayer);
+
+		PTF_ASSERT_BUF_COMPARE(searchResultDoneLayer.getData(), expectedSearchResultDoneLayer->getData(),
+		                       expectedSearchResultDoneLayer->getDataLen());
 	}
 } // LdapCreationTest
