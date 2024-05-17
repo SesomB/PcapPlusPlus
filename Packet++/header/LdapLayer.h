@@ -183,6 +183,8 @@ namespace pcpp
 		std::unique_ptr<Asn1Record> m_Asn1Record;
 
 		LdapLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet);
+		LdapLayer() = default;
+		void init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords);
 		Asn1SequenceRecord* getAsn1Record() const;
 		Asn1ConstructedRecord* getMessageRecord() const;
 		virtual std::string getExtendedStringInfo() const {return ""; }
@@ -311,6 +313,10 @@ namespace pcpp
 		LdapSearchRequestLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
 
+		LdapSearchRequestLayer(
+				uint16_t messageId, const std::string& baseObject, SearchRequestScope scope, DerefAliases derefAliases,
+				uint8_t sizeLimit, uint8_t timeLimit, bool typesOnly, const std::vector<uint8_t>& filter,
+				const std::vector<std::string>& attributes);
 		std::string getBaseObject() const;
 		SearchRequestScope getScope() const;
 		DerefAliases getDerefAlias() const;
@@ -335,6 +341,8 @@ namespace pcpp
 	public:
 		LdapSearchResultEntryLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapSearchResultEntryLayer(uint16_t messageId, const std::string& objectName, const std::vector<LdapPartialAttribute>& attributes);
 
 		std::string getObjectName() const;
 		std::vector<LdapPartialAttribute> getAttributes() const;
