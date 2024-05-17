@@ -4,6 +4,8 @@
 #include "GeneralUtils.h"
 #include "EndianPortable.h"
 #include <iostream>
+#include <sstream>
+#include <numeric>
 #include <cstring>
 #include <cmath>
 #include <limits>
@@ -68,14 +70,10 @@ namespace pcpp {
 			return result;
 		}
 
-		// Assuming the size is always 4 bytes
-		uint8_t firstByte = 0x80 | sizeof(uint32_t);
+		// Assuming the size is always less than 256
+		uint8_t firstByte = 0x80 | 0x01;
 		result.push_back(firstByte);
-
-		result.push_back((m_ValueLength >> 24) & 0xff);
-		result.push_back((m_ValueLength >> 16) & 0xff);
-		result.push_back((m_ValueLength >> 8) & 0xff);
-		result.push_back(m_ValueLength & 0xff);
+		result.push_back(m_ValueLength);
 
 		return result;
 	}
@@ -327,6 +325,257 @@ namespace pcpp {
 		}
 	}
 
+	std::string Asn1Record::toString()
+	{
+		auto lines = toStringInternal();
+
+		auto commaSeparated = [](std::string a, std::string b)
+		{
+			return std::move(a) + '\n' + std::move(b);
+		};
+
+		return std::accumulate(std::next(lines.begin()), lines.end(),lines[0], commaSeparated);
+	}
+
+	std::vector<std::string> Asn1Record::toStringInternal()
+	{
+		std::ostringstream stream;
+
+		auto universalType = getUniversalTagType();
+		if (universalType == Asn1UniversalTagType::NotApplicable)
+		{
+			switch (m_TagClass)
+			{
+				case Asn1TagClass::ContextSpecific:
+				{
+					stream << "ContextSpecific";
+					break;
+				}
+				case Asn1TagClass::Application:
+				{
+					stream << "Application";
+					break;
+				}
+				case Asn1TagClass::Private:
+				{
+					stream << "Private";
+					break;
+				}
+				default:
+				{
+					stream << "Unknown";
+				}
+			}
+			stream << " (" << static_cast<int>(m_TagType) << ")";
+		}
+		else
+		{
+			switch (universalType)
+			{
+				case Asn1UniversalTagType::EndOfContent:
+				{
+					stream << "EndOfContent";
+					break;
+				}
+				case Asn1UniversalTagType::Boolean:
+				{
+					stream << "Boolean";
+					break;
+				}
+				case Asn1UniversalTagType::Integer:
+				{
+					stream << "Integer";
+					break;
+				}
+				case Asn1UniversalTagType::BitString:
+				{
+					stream << "BitString";
+					break;
+				}
+				case Asn1UniversalTagType::OctetString:
+				{
+					stream << "OctetString";
+					break;
+				}
+				case Asn1UniversalTagType::Null:
+				{
+					stream << "Null";
+					break;
+				}
+				case Asn1UniversalTagType::ObjectIdentifier:
+				{
+					stream << "ObjectIdentifier";
+					break;
+				}
+				case Asn1UniversalTagType::ObjectDescriptor:
+				{
+					stream << "ObjectDescriptor";
+					break;
+				}
+				case Asn1UniversalTagType::External:
+				{
+					stream << "External";
+					break;
+				}
+				case Asn1UniversalTagType::Real:
+				{
+					stream << "Real";
+					break;
+				}
+				case Asn1UniversalTagType::Enumerated:
+				{
+					stream << "Enumerated";
+					break;
+				}
+				case Asn1UniversalTagType::EmbeddedPDV:
+				{
+					stream << "EmbeddedPDV";
+					break;
+				}
+				case Asn1UniversalTagType::UTF8String:
+				{
+					stream << "UTF8String";
+					break;
+				}
+				case Asn1UniversalTagType::RelativeObjectIdentifier:
+				{
+					stream << "RelativeObjectIdentifier";
+					break;
+				}
+				case Asn1UniversalTagType::Time:
+				{
+					stream << "Time";
+					break;
+				}
+				case Asn1UniversalTagType::Reserved:
+				{
+					stream << "Reserved";
+					break;
+				}
+				case Asn1UniversalTagType::Sequence:
+				{
+					stream << "Sequence";
+					break;
+				}
+				case Asn1UniversalTagType::Set:
+				{
+					stream << "Set";
+					break;
+				}
+				case Asn1UniversalTagType::NumericString:
+				{
+					stream << "NumericString";
+					break;
+				}
+				case Asn1UniversalTagType::PrintableString:
+				{
+					stream << "PrintableString";
+					break;
+				}
+				case Asn1UniversalTagType::T61String:
+				{
+					stream << "T61String";
+					break;
+				}
+				case Asn1UniversalTagType::VideotexString:
+				{
+					stream << "VideotexString";
+					break;
+				}
+				case Asn1UniversalTagType::IA5String:
+				{
+					stream << "IA5String";
+					break;
+				}
+				case Asn1UniversalTagType::UTCTime:
+				{
+					stream << "UTCTime";
+					break;
+				}
+				case Asn1UniversalTagType::GeneralizedTime:
+				{
+					stream << "GeneralizedTime";
+					break;
+				}
+				case Asn1UniversalTagType::GraphicString:
+				{
+					stream << "GraphicString";
+					break;
+				}
+				case Asn1UniversalTagType::VisibleString:
+				{
+					stream << "VisibleString";
+					break;
+				}
+				case Asn1UniversalTagType::GeneralString:
+				{
+					stream << "GeneralString";
+					break;
+				}
+				case Asn1UniversalTagType::UniversalString:
+				{
+					stream << "UniversalString";
+					break;
+				}
+				case Asn1UniversalTagType::CharacterString:
+				{
+					stream << "CharacterString";
+					break;
+				}
+				case Asn1UniversalTagType::BMPString:
+				{
+					stream << "BMPString";
+					break;
+				}
+				case Asn1UniversalTagType::Date:
+				{
+					stream << "Date";
+					break;
+				}
+				case Asn1UniversalTagType::TimeOfDay:
+				{
+					stream << "TimeOfDay";
+					break;
+				}
+				case Asn1UniversalTagType::DateTime:
+				{
+					stream << "DateTime";
+					break;
+				}
+				case Asn1UniversalTagType::Duration:
+				{
+					stream << "Duration";
+					break;
+				}
+				case Asn1UniversalTagType::ObjectIdentifierIRI:
+				{
+					stream << "ObjectIdentifierIRI";
+					break;
+				}
+				case Asn1UniversalTagType::RelativeObjectIdentifierIRI:
+				{
+					stream << "RelativeObjectIdentifierIRI";
+					break;
+				}
+				default:
+				{
+					stream << "Unknown";
+					break;
+				}
+			}
+		}
+
+		if (m_IsConstructed)
+		{
+			stream << " (constructed)";
+		}
+
+		stream << ", Length: " << m_TotalLength - m_ValueLength << "+" << m_ValueLength;
+
+		return std::vector<std::string>({stream.str()});
+	}
+
+
 	Asn1GenericRecord::Asn1GenericRecord(Asn1TagClass tagClass, bool isConstructed, uint8_t tagType, const uint8_t* value, size_t valueLen)
 	{
 		m_TagType = tagType;
@@ -359,21 +608,12 @@ namespace pcpp {
 
 	Asn1ConstructedRecord::Asn1ConstructedRecord(Asn1TagClass tagClass, uint8_t tagType, const std::vector<Asn1Record*>& subRecords)
 	{
-		m_TagType = tagType;
-		m_TagClass = tagClass;
-		m_IsConstructed = true;
+		init(tagClass, tagType, subRecords.begin(), subRecords.end());
+	}
 
-		size_t recordValueLength = 0;
-		for (auto record : subRecords)
-		{
-			auto encodedRecord = record->encode();
-			auto copyRecord = Asn1Record::decode(encodedRecord.data(), encodedRecord.size(), false);
-			m_SubRecords.pushBack(copyRecord.release());
-			recordValueLength += encodedRecord.size();
-		}
-
-		m_ValueLength = recordValueLength;
-		m_TotalLength = recordValueLength + 2;
+	Asn1ConstructedRecord::Asn1ConstructedRecord(Asn1TagClass tagClass, uint8_t tagType, const PointerVector<Asn1Record>& subRecords)
+	{
+		init(tagClass, tagType, subRecords.begin(), subRecords.end());
 	}
 
 	void Asn1ConstructedRecord::decodeValue(uint8_t* data, bool lazy)
@@ -409,12 +649,33 @@ namespace pcpp {
 		return result;
 	}
 
+	std::vector<std::string> Asn1ConstructedRecord::toStringInternal()
+	{
+		std::vector<std::string> result = {Asn1Record::toStringInternal().front()};
+		for (auto subRecord : m_SubRecords)
+		{
+			for (const auto& line : subRecord->toStringInternal())
+			{
+				result.push_back("  " + line);
+			}
+		}
+		return result;
+	}
+
 	Asn1SequenceRecord::Asn1SequenceRecord(const std::vector<Asn1Record*>& subRecords)
 		: Asn1ConstructedRecord(Asn1TagClass::Universal, static_cast<uint8_t>(Asn1UniversalTagType::Sequence), subRecords)
 	{}
 
+	Asn1SequenceRecord::Asn1SequenceRecord(const PointerVector<Asn1Record>& subRecords)
+		: Asn1ConstructedRecord(Asn1TagClass::Universal, static_cast<uint8_t>(Asn1UniversalTagType::Sequence), subRecords)
+	{}
+
 	Asn1SetRecord::Asn1SetRecord(const std::vector<Asn1Record*>& subRecords)
-			: Asn1ConstructedRecord(Asn1TagClass::Universal, static_cast<uint8_t>(Asn1UniversalTagType::Set), subRecords)
+		: Asn1ConstructedRecord(Asn1TagClass::Universal, static_cast<uint8_t>(Asn1UniversalTagType::Set), subRecords)
+	{}
+
+	Asn1SetRecord::Asn1SetRecord(const PointerVector<Asn1Record>& subRecords)
+		: Asn1ConstructedRecord(Asn1TagClass::Universal, static_cast<uint8_t>(Asn1UniversalTagType::Set), subRecords)
 	{}
 
 	Asn1PrimitiveRecord::Asn1PrimitiveRecord(Asn1UniversalTagType tagType) : Asn1Record()
@@ -526,6 +787,11 @@ namespace pcpp {
 		return result;
 	}
 
+	std::vector<std::string> Asn1IntegerRecord::toStringInternal()
+	{
+		return std::vector<std::string>({Asn1Record::toStringInternal().front() + ", Value: " + std::to_string(getValue())});
+	}
+
 	Asn1EnumeratedRecord::Asn1EnumeratedRecord(uint32_t value) : Asn1IntegerRecord(value)
 	{
 		m_TagType = static_cast<uint8_t>(Asn1UniversalTagType::Enumerated);
@@ -548,6 +814,11 @@ namespace pcpp {
 		return {m_Value.begin(), m_Value.end()};
 	}
 
+	std::vector<std::string> Asn1OctetStringRecord::toStringInternal()
+	{
+		return std::vector<std::string>({Asn1Record::toStringInternal().front() + ", Value: " + getValue()});
+	}
+
 	Asn1BooleanRecord::Asn1BooleanRecord(bool value) : Asn1PrimitiveRecord(Asn1UniversalTagType::Boolean)
 	{
 		m_Value = value;
@@ -564,6 +835,11 @@ namespace pcpp {
 	{
 		uint8_t byte = (m_Value ? 0xff : 0x00);
 		return { byte };
+	}
+
+	std::vector<std::string> Asn1BooleanRecord::toStringInternal()
+	{
+		return std::vector<std::string>({Asn1Record::toStringInternal().front() + ", Value: " + (getValue() ? "true" : "false")});
 	}
 
 	Asn1NullRecord::Asn1NullRecord() : Asn1PrimitiveRecord(Asn1UniversalTagType::Null)
