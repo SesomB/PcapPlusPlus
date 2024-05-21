@@ -466,6 +466,18 @@ namespace pcpp
 		}
 	};
 
+	class LdapResponse : public LdapLayer
+	{
+	public:
+		LdapResult getResult() const;
+	protected:
+		LdapResponse(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapResponse(uint16_t messageId, const LdapOperationType& operationType, const LdapResultCode& resultCode,
+			 const std::string& matchedDN, const std::string& diagnosticMessage, const std::string& referral = "");
+	};
+
 	class LdapSearchRequestLayer : public LdapLayer
 	{
 	public:
@@ -608,16 +620,66 @@ namespace pcpp
 		}
 	};
 
-	class LdapSearchResultDoneLayer : public LdapLayer
+	class LdapSearchResultDoneLayer : public LdapResponse
 	{
 	public:
 		LdapSearchResultDoneLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
-			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
+			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
 
 		LdapSearchResultDoneLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
-			const std::string& diagnosticMessage, const std::string& referral = "");
+		                          const std::string& diagnosticMessage, const std::string& referral = "") :
+			LdapResponse(messageId, LdapOperationType::SearchResultDone, resultCode, matchedDN, diagnosticMessage, referral) {}
 
-		LdapResult getResult() const;
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+	};
+
+	class LdapModifyResponseLayer : public LdapResponse
+	{
+	public:
+		LdapModifyResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapModifyResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+		                        const std::string& diagnosticMessage, const std::string& referral = "") :
+			LdapResponse(messageId, LdapOperationType::ModifyResponse, resultCode, matchedDN, diagnosticMessage, referral) {}
+
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+	};
+
+	class LdapAddResponseLayer : public LdapResponse
+	{
+	public:
+		LdapAddResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapAddResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+		                        const std::string& diagnosticMessage, const std::string& referral = "") :
+			LdapResponse(messageId, LdapOperationType::AddResponse, resultCode, matchedDN, diagnosticMessage, referral) {}
+
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+	};
+
+	class LdapDeleteResponseLayer : public LdapResponse
+	{
+	public:
+		LdapDeleteResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapDeleteResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+		                     const std::string& diagnosticMessage, const std::string& referral = "") :
+			LdapResponse(messageId, LdapOperationType::DelResponse, resultCode, matchedDN, diagnosticMessage, referral) {}
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)

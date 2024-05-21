@@ -74,6 +74,42 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_TRUE(searchResultDoneLayer->getResult() == expectedResult);
 	}
 
+	// ModifyResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_modify_response.dat");
+		pcpp::Packet modifyResponsePacket(&rawPacket1);
+
+		auto modifyResponseLayer = modifyResponsePacket.getLayerOfType<pcpp::LdapModifyResponseLayer>();
+		PTF_ASSERT_NOT_NULL(modifyResponseLayer);
+		PTF_ASSERT_EQUAL(modifyResponseLayer->getMessageID(), 19);
+		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
+		PTF_ASSERT_TRUE(modifyResponseLayer->getResult() == expectedResult);
+	}
+
+	// AddResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_add_response.dat");
+		pcpp::Packet addResponsePacket(&rawPacket1);
+
+		auto addResponseLayer = addResponsePacket.getLayerOfType<pcpp::LdapAddResponseLayer>();
+		PTF_ASSERT_NOT_NULL(addResponseLayer);
+		PTF_ASSERT_EQUAL(addResponseLayer->getMessageID(), 27);
+		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
+		PTF_ASSERT_TRUE(addResponseLayer->getResult() == expectedResult);
+	}
+
+	// DeleteResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_del_response.dat");
+		pcpp::Packet deleteResponsePacket(&rawPacket1);
+
+		auto deleteResponseLayer = deleteResponsePacket.getLayerOfType<pcpp::LdapDeleteResponseLayer>();
+		PTF_ASSERT_NOT_NULL(deleteResponseLayer);
+		PTF_ASSERT_EQUAL(deleteResponseLayer->getMessageID(), 22);
+		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
+		PTF_ASSERT_TRUE(deleteResponseLayer->getResult() == expectedResult);
+	}
+
 	// Test tryGet
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
@@ -191,5 +227,47 @@ PTF_TEST_CASE(LdapCreationTest)
 
 		PTF_ASSERT_BUF_COMPARE(searchResultDoneLayer.getData(), expectedSearchResultDoneLayer->getData(),
 		                       expectedSearchResultDoneLayer->getDataLen());
+	}
+
+	// ModifyResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_modify_response.dat");
+		pcpp::Packet modifyResponsePacket(&rawPacket1);
+
+		pcpp::LdapModifyResponseLayer modifyResponseLayer(19, pcpp::LdapResultCode::Success, "", "");
+
+		auto expectedModifyResponseLayer = modifyResponsePacket.getLayerOfType<pcpp::LdapModifyResponseLayer>();
+		PTF_ASSERT_NOT_NULL(expectedModifyResponseLayer);
+
+		PTF_ASSERT_BUF_COMPARE(modifyResponseLayer.getData(), expectedModifyResponseLayer->getData(),
+		                       expectedModifyResponseLayer->getDataLen());
+	}
+
+	// AddResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_add_response.dat");
+		pcpp::Packet addResponsePacket(&rawPacket1);
+
+		pcpp::LdapAddResponseLayer addResponseLayer(27, pcpp::LdapResultCode::Success, "", "");
+
+		auto expectedAddResponseLayer = addResponsePacket.getLayerOfType<pcpp::LdapAddResponseLayer>();
+		PTF_ASSERT_NOT_NULL(expectedAddResponseLayer);
+
+		PTF_ASSERT_BUF_COMPARE(addResponseLayer.getData(), expectedAddResponseLayer->getData(),
+		                       expectedAddResponseLayer->getDataLen());
+	}
+
+	// DelResponse
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_del_response.dat");
+		pcpp::Packet deleteResponsePacket(&rawPacket1);
+
+		pcpp::LdapDeleteResponseLayer deleteResponseLayer(22, pcpp::LdapResultCode::Success, "", "");
+
+		auto expectedDeleteResponseLayer = deleteResponsePacket.getLayerOfType<pcpp::LdapDeleteResponseLayer>();
+		PTF_ASSERT_NOT_NULL(expectedDeleteResponseLayer);
+
+		PTF_ASSERT_BUF_COMPARE(deleteResponseLayer.getData(), expectedDeleteResponseLayer->getData(),
+		                       expectedDeleteResponseLayer->getDataLen());
 	}
 } // LdapCreationTest
