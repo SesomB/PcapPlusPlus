@@ -70,8 +70,10 @@ PTF_TEST_CASE(LdapParsingTest)
 		auto searchResultDoneLayer = searchReusltDonePacket.getLayerOfType<pcpp::LdapSearchResultDoneLayer>();
 		PTF_ASSERT_NOT_NULL(searchResultDoneLayer);
 		PTF_ASSERT_EQUAL(searchResultDoneLayer->getMessageID(), 25);
-		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
-		PTF_ASSERT_TRUE(searchResultDoneLayer->getResult() == expectedResult);
+		PTF_ASSERT_EQUAL(searchResultDoneLayer->getResultCode(), pcpp::LdapResultCode::Success);
+		PTF_ASSERT_EQUAL(searchResultDoneLayer->getMatchedDN(), "");
+		PTF_ASSERT_EQUAL(searchResultDoneLayer->getDiagnosticMessage(), "");
+		PTF_ASSERT_EQUAL(searchResultDoneLayer->getReferral(), "");
 	}
 
 	// ModifyResponse
@@ -82,8 +84,10 @@ PTF_TEST_CASE(LdapParsingTest)
 		auto modifyResponseLayer = modifyResponsePacket.getLayerOfType<pcpp::LdapModifyResponseLayer>();
 		PTF_ASSERT_NOT_NULL(modifyResponseLayer);
 		PTF_ASSERT_EQUAL(modifyResponseLayer->getMessageID(), 19);
-		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
-		PTF_ASSERT_TRUE(modifyResponseLayer->getResult() == expectedResult);
+		PTF_ASSERT_EQUAL(modifyResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
+		PTF_ASSERT_EQUAL(modifyResponseLayer->getMatchedDN(), "");
+		PTF_ASSERT_EQUAL(modifyResponseLayer->getDiagnosticMessage(), "");
+		PTF_ASSERT_EQUAL(modifyResponseLayer->getReferral(), "");
 	}
 
 	// AddResponse
@@ -94,8 +98,10 @@ PTF_TEST_CASE(LdapParsingTest)
 		auto addResponseLayer = addResponsePacket.getLayerOfType<pcpp::LdapAddResponseLayer>();
 		PTF_ASSERT_NOT_NULL(addResponseLayer);
 		PTF_ASSERT_EQUAL(addResponseLayer->getMessageID(), 27);
-		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
-		PTF_ASSERT_TRUE(addResponseLayer->getResult() == expectedResult);
+		PTF_ASSERT_EQUAL(addResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
+		PTF_ASSERT_EQUAL(addResponseLayer->getMatchedDN(), "");
+		PTF_ASSERT_EQUAL(addResponseLayer->getDiagnosticMessage(), "");
+		PTF_ASSERT_EQUAL(addResponseLayer->getReferral(), "");
 	}
 
 	// DeleteResponse
@@ -106,8 +112,10 @@ PTF_TEST_CASE(LdapParsingTest)
 		auto deleteResponseLayer = deleteResponsePacket.getLayerOfType<pcpp::LdapDeleteResponseLayer>();
 		PTF_ASSERT_NOT_NULL(deleteResponseLayer);
 		PTF_ASSERT_EQUAL(deleteResponseLayer->getMessageID(), 22);
-		pcpp::LdapResult expectedResult = {pcpp::LdapResultCode::Success, "", "", ""};
-		PTF_ASSERT_TRUE(deleteResponseLayer->getResult() == expectedResult);
+		PTF_ASSERT_EQUAL(deleteResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
+		PTF_ASSERT_EQUAL(deleteResponseLayer->getMatchedDN(), "");
+		PTF_ASSERT_EQUAL(deleteResponseLayer->getDiagnosticMessage(), "");
+		PTF_ASSERT_EQUAL(deleteResponseLayer->getReferral(), "");
 	}
 
 	// Test tryGet

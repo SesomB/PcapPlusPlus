@@ -453,23 +453,13 @@ namespace pcpp
 		}
 	};
 
-	struct LdapResult
-	{
-		LdapResultCode resultCode;
-		std::string matchedDN;
-		std::string diagnosticMessage;
-		std::string referral;
-
-		bool operator==(const LdapResult& other) const
-		{
-			return resultCode == other.resultCode && matchedDN == other.matchedDN && diagnosticMessage == other.diagnosticMessage && referral == other.referral;
-		}
-	};
-
 	class LdapResponse : public LdapLayer
 	{
 	public:
-		LdapResult getResult() const;
+		LdapResultCode getResultCode() const;
+		std::string getMatchedDN() const;
+		std::string getDiagnosticMessage() const;
+		std::string getReferral() const;
 	protected:
 		LdapResponse(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
