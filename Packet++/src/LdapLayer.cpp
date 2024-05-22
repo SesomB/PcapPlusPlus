@@ -95,19 +95,13 @@ namespace pcpp
 	}
 
 	LdapResponse::LdapResponse(uint16_t messageId, const LdapOperationType& operationType, const LdapResultCode& resultCode,
-		const std::string& matchedDN, const std::string& diagnosticMessage, const std::string& referral)
+		const std::string& matchedDN, const std::string& diagnosticMessage)
 	{
 		Asn1EnumeratedRecord resultCodeRecord(resultCode);
 		Asn1OctetStringRecord matchedDNRecord(matchedDN);
 		Asn1OctetStringRecord diagnosticMessageRecord(diagnosticMessage);
 
 		std::vector<Asn1Record*> messageSubRecords = {&resultCodeRecord, &matchedDNRecord, &diagnosticMessageRecord};
-
-		Asn1OctetStringRecord referralRecord(referral);
-		if (!referral.empty())
-		{
-			messageSubRecords.push_back(&referralRecord);
-		}
 
 		LdapLayer::init(messageId, operationType, messageSubRecords);
 	}
@@ -124,15 +118,6 @@ namespace pcpp
 	std::string LdapResponse::getDiagnosticMessage() const
 	{
 		return getMessageRecord()->getSubRecords().at(2)->castAs<Asn1OctetStringRecord>()->getValue();
-	}
-	std::string LdapResponse::getReferral() const
-	{
-		if (getMessageRecord()->getSubRecords().size() > 3)
-		{
-			return getMessageRecord()->getSubRecords().at(3)->castAs<Asn1OctetStringRecord>()->getValue();
-		}
-
-		return "";
 	}
 
 	LdapSearchRequestLayer::LdapSearchRequestLayer(

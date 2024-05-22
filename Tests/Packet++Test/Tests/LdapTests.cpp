@@ -73,7 +73,6 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(searchResultDoneLayer->getResultCode(), pcpp::LdapResultCode::Success);
 		PTF_ASSERT_EQUAL(searchResultDoneLayer->getMatchedDN(), "");
 		PTF_ASSERT_EQUAL(searchResultDoneLayer->getDiagnosticMessage(), "");
-		PTF_ASSERT_EQUAL(searchResultDoneLayer->getReferral(), "");
 	}
 
 	// ModifyResponse
@@ -87,7 +86,6 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(modifyResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
 		PTF_ASSERT_EQUAL(modifyResponseLayer->getMatchedDN(), "");
 		PTF_ASSERT_EQUAL(modifyResponseLayer->getDiagnosticMessage(), "");
-		PTF_ASSERT_EQUAL(modifyResponseLayer->getReferral(), "");
 	}
 
 	// AddResponse
@@ -101,7 +99,6 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(addResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
 		PTF_ASSERT_EQUAL(addResponseLayer->getMatchedDN(), "");
 		PTF_ASSERT_EQUAL(addResponseLayer->getDiagnosticMessage(), "");
-		PTF_ASSERT_EQUAL(addResponseLayer->getReferral(), "");
 	}
 
 	// DeleteResponse
@@ -115,7 +112,6 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(deleteResponseLayer->getResultCode(), pcpp::LdapResultCode::Success);
 		PTF_ASSERT_EQUAL(deleteResponseLayer->getMatchedDN(), "");
 		PTF_ASSERT_EQUAL(deleteResponseLayer->getDiagnosticMessage(), "");
-		PTF_ASSERT_EQUAL(deleteResponseLayer->getReferral(), "");
 	}
 
 	// Test tryGet
