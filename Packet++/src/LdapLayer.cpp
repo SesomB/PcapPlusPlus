@@ -1,4 +1,5 @@
 #include "LdapLayer.h"
+#include "GeneralUtils.h"
 #include <iostream>
 
 namespace pcpp
@@ -10,16 +11,43 @@ namespace pcpp
 		m_Asn1Record = std::move(asn1Record);
 	}
 
-	void LdapLayer::init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords)
+	void LdapLayer::init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords, const std::vector<LdapControl> controls)
 	{
 		Asn1IntegerRecord messageIdRecord(messageId);
 		Asn1ConstructedRecord messageRootRecord(Asn1TagClass::Application, operationType, messageRecords);
-		Asn1SequenceRecord rootRecord({&messageIdRecord, &messageRootRecord});
 
-		auto encodedRecord = rootRecord.encode();
-		m_DataLen = encodedRecord.size();
+		std::vector<Asn1Record*> rootSubRecords = {&messageIdRecord, &messageRootRecord};
+
+		std::unique_ptr<Asn1ConstructedRecord> controlsRecord;
+		if (!controls.empty())
+		{
+			PointerVector<Asn1Record> controlsSubRecords;
+			for (const auto& control : controls)
+			{
+				Asn1OctetStringRecord controlTypeRecord(control.controlType);
+				if (control.controlValue.empty())
+				{
+					controlsSubRecords.pushBack(new Asn1SequenceRecord({&controlTypeRecord}));
+				}
+				else
+				{
+					auto controlValueSize = static_cast<size_t>(control.controlValue.size() / 2);
+					std::unique_ptr<uint8_t[]> controlValue(new uint8_t[controlValueSize]);
+					controlValueSize = hexStringToByteArray(control.controlValue, controlValue.get(), controlValueSize);
+					Asn1OctetStringRecord controlValueRecord(controlValue.get(), controlValueSize);
+					controlsSubRecords.pushBack(new Asn1SequenceRecord({&controlTypeRecord, &controlValueRecord}));
+				}
+			}
+			controlsRecord = std::unique_ptr<Asn1ConstructedRecord>(new Asn1ConstructedRecord(Asn1TagClass::ContextSpecific, 0, controlsSubRecords));
+			rootSubRecords.push_back(controlsRecord.get());
+		}
+
+		Asn1SequenceRecord rootRecord(rootSubRecords);
+
+		auto encodedData = rootRecord.encode();
+		m_DataLen = encodedData.size();
 		m_Data = new uint8_t[m_DataLen];
-		std::copy(encodedRecord.begin(), encodedRecord.end(), m_Data);
+		std::copy(encodedData.begin(), encodedData.end(), m_Data);
 		m_Protocol = LDAP;
 		m_Asn1Record = Asn1Record::decode(m_Data, m_DataLen, true);
 	}
@@ -89,13 +117,37 @@ namespace pcpp
 		return getAsn1Record()->getSubRecords().at(0)->castAs<Asn1IntegerRecord>()->getValue();
 	}
 
+	std::vector<LdapControl> LdapLayer::getControls() const
+	{
+		std::vector<LdapControl> controls;
+		if (getAsn1Record()->getSubRecords().size() < 3)
+		{
+			return controls;
+		}
+
+		auto controlsRecord = getAsn1Record()->getSubRecords().at(2)->castAs<Asn1ConstructedRecord>();
+		for (auto controlRecord : controlsRecord->getSubRecords())
+		{
+			auto controlSequence = controlRecord->castAs<Asn1SequenceRecord>();
+			auto controlType = controlSequence->getSubRecords().at(0)->castAs<Asn1OctetStringRecord>()->getValue();
+			std::string controlValue;
+			if (controlSequence->getSubRecords().size() > 1)
+			{
+				controlValue = controlSequence->getSubRecords().at(1)->castAs<Asn1OctetStringRecord>()->getValue();
+			}
+			controls.push_back({ controlType, controlValue });
+		}
+
+		return controls;
+	}
+
 	LdapOperationType LdapLayer::getLdapOperationType() const
 	{
 		return LdapOperationType::fromIntValue(getMessageRecord()->getTagType());
 	}
 
 	LdapResponse::LdapResponse(uint16_t messageId, const LdapOperationType& operationType, const LdapResultCode& resultCode,
-		const std::string& matchedDN, const std::string& diagnosticMessage)
+		const std::string& matchedDN, const std::string& diagnosticMessage, const std::vector<LdapControl> controls)
 	{
 		Asn1EnumeratedRecord resultCodeRecord(resultCode);
 		Asn1OctetStringRecord matchedDNRecord(matchedDN);
@@ -103,7 +155,7 @@ namespace pcpp
 
 		std::vector<Asn1Record*> messageSubRecords = {&resultCodeRecord, &matchedDNRecord, &diagnosticMessageRecord};
 
-		LdapLayer::init(messageId, operationType, messageSubRecords);
+		LdapLayer::init(messageId, operationType, messageSubRecords, controls);
 	}
 
 	LdapResultCode LdapResponse::getResultCode() const
@@ -123,7 +175,7 @@ namespace pcpp
 	LdapSearchRequestLayer::LdapSearchRequestLayer(
 		uint16_t messageId, const std::string& baseObject, SearchRequestScope scope, DerefAliases derefAliases,
 		uint8_t sizeLimit, uint8_t timeLimit, bool typesOnly, const std::vector<uint8_t>& filter,
-		const std::vector<std::string>& attributes)
+		const std::vector<std::string>& attributes, const std::vector<LdapControl> controls)
 	{
 		Asn1OctetStringRecord baseObjectRecord(baseObject);
 		Asn1EnumeratedRecord scopeRecord(scope);
@@ -140,7 +192,7 @@ namespace pcpp
 		}
 		Asn1SequenceRecord attributesRecord(attributeSubRecords);
 
-		LdapLayer::init(messageId, LdapOperationType::SearchRequest, {&baseObjectRecord, &scopeRecord, &derefAliasesRecord, &sizeLimitRecord, &timeLimitRecord, &typeOnlyRecord, filterRecord.get(), &attributesRecord});
+		LdapLayer::init(messageId, LdapOperationType::SearchRequest, {&baseObjectRecord, &scopeRecord, &derefAliasesRecord, &sizeLimitRecord, &timeLimitRecord, &typeOnlyRecord, filterRecord.get(), &attributesRecord}, controls);
 	}
 	std::string LdapSearchRequestLayer::getBaseObject() const
 	{
@@ -195,7 +247,8 @@ namespace pcpp
 		return "\"" + baseObject + "\", " + getScope().toString();
 	}
 
-	LdapSearchResultEntryLayer::LdapSearchResultEntryLayer(uint16_t messageId, const std::string& objectName, const std::vector<LdapPartialAttribute>& attributes)
+	LdapSearchResultEntryLayer::LdapSearchResultEntryLayer(uint16_t messageId, const std::string& objectName,
+		const std::vector<LdapPartialAttribute>& attributes, const std::vector<LdapControl> controls)
 	{
 		PointerVector<Asn1Record> attributesSubRecords;
 		for (const auto& attribute : attributes)
@@ -215,7 +268,7 @@ namespace pcpp
 		Asn1OctetStringRecord objectNameRecord(objectName);
 		Asn1SequenceRecord attributesRecord(attributesSubRecords);
 
-		LdapLayer::init(messageId, LdapOperationType::SearchResultEntry, {&objectNameRecord, &attributesRecord});
+		LdapLayer::init(messageId, LdapOperationType::SearchResultEntry, {&objectNameRecord, &attributesRecord}, controls);
 	}
 
 	std::string LdapSearchResultEntryLayer::getObjectName() const

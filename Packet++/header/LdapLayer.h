@@ -385,6 +385,17 @@ namespace pcpp
 		Value m_Value;
 	};
 
+	struct LdapControl
+	{
+		std::string controlType;
+		std::string controlValue;
+
+		bool operator==(const LdapControl& other) const
+		{
+			return controlType == other.controlType && controlValue == other.controlValue;
+		}
+	};
+
 	/**
 	 * @class LdapLayer
 	 * TBD
@@ -394,7 +405,11 @@ namespace pcpp
 	public:
 		~LdapLayer() {}
 
+		Asn1Record* getRawAsn1Record() const { return m_Asn1Record.get(); }
+
 		uint16_t getMessageID() const;
+
+		std::vector<LdapControl> getControls() const;
 
 		LdapOperationType getLdapOperationType() const;
 
@@ -422,7 +437,7 @@ namespace pcpp
 
 		LdapLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet);
 		LdapLayer() = default;
-		void init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords);
+		void init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& , const std::vector<LdapControl> controls = std::vector<LdapControl>());
 		Asn1SequenceRecord* getAsn1Record() const;
 		Asn1ConstructedRecord* getMessageRecord() const;
 		virtual std::string getExtendedStringInfo() const {return ""; }
@@ -463,7 +478,8 @@ namespace pcpp
 		LdapResponse(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapResponse(uint16_t messageId, const LdapOperationType& operationType, const LdapResultCode& resultCode, const std::string& matchedDN, const std::string& diagnosticMessage);
+		LdapResponse(uint16_t messageId, const LdapOperationType& operationType, const LdapResultCode& resultCode,
+			const std::string& matchedDN, const std::string& diagnosticMessage, const std::vector<LdapControl> controls);
 	};
 
 	class LdapSearchRequestLayer : public LdapLayer
@@ -568,9 +584,9 @@ namespace pcpp
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
 
 		LdapSearchRequestLayer(
-				uint16_t messageId, const std::string& baseObject, SearchRequestScope scope, DerefAliases derefAliases,
-				uint8_t sizeLimit, uint8_t timeLimit, bool typesOnly, const std::vector<uint8_t>& filter,
-				const std::vector<std::string>& attributes);
+			uint16_t messageId, const std::string& baseObject, SearchRequestScope scope, DerefAliases derefAliases,
+			uint8_t sizeLimit, uint8_t timeLimit, bool typesOnly, const std::vector<uint8_t>& filter,
+			const std::vector<std::string>& attributes, const std::vector<LdapControl> controls = std::vector<LdapControl>());
 		std::string getBaseObject() const;
 		SearchRequestScope getScope() const;
 		DerefAliases getDerefAlias() const;
@@ -596,7 +612,8 @@ namespace pcpp
 		LdapSearchResultEntryLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapSearchResultEntryLayer(uint16_t messageId, const std::string& objectName, const std::vector<LdapPartialAttribute>& attributes);
+		LdapSearchResultEntryLayer(uint16_t messageId, const std::string& objectName,
+			const std::vector<LdapPartialAttribute>& attributes, const std::vector<LdapControl> controls = std::vector<LdapControl>());
 
 		std::string getObjectName() const;
 		std::vector<LdapPartialAttribute> getAttributes() const;
@@ -614,8 +631,9 @@ namespace pcpp
 		LdapSearchResultDoneLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapSearchResultDoneLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN, const std::string& diagnosticMessage) :
-			LdapResponse(messageId, LdapOperationType::SearchResultDone, resultCode, matchedDN, diagnosticMessage) {}
+		LdapSearchResultDoneLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+			const std::string& diagnosticMessage, const std::vector<LdapControl> controls = std::vector<LdapControl>()) :
+			LdapResponse(messageId, LdapOperationType::SearchResultDone, resultCode, matchedDN, diagnosticMessage, controls) {}
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)
@@ -630,8 +648,9 @@ namespace pcpp
 		LdapModifyResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapModifyResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN, const std::string& diagnosticMessage) :
-			LdapResponse(messageId, LdapOperationType::ModifyResponse, resultCode, matchedDN, diagnosticMessage) {}
+		LdapModifyResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+			const std::string& diagnosticMessage, const std::vector<LdapControl> controls = std::vector<LdapControl>()) :
+			LdapResponse(messageId, LdapOperationType::ModifyResponse, resultCode, matchedDN, diagnosticMessage, controls) {}
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)
@@ -646,8 +665,9 @@ namespace pcpp
 		LdapAddResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapAddResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN, const std::string& diagnosticMessage) :
-			LdapResponse(messageId, LdapOperationType::AddResponse, resultCode, matchedDN, diagnosticMessage) {}
+		LdapAddResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+			const std::string& diagnosticMessage, const std::vector<LdapControl> controls = std::vector<LdapControl>()) :
+			LdapResponse(messageId, LdapOperationType::AddResponse, resultCode, matchedDN, diagnosticMessage, controls) {}
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)
@@ -662,8 +682,9 @@ namespace pcpp
 		LdapDeleteResponseLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
 			: LdapResponse(asn1Record, data, dataLen, prevLayer, packet) {}
 
-		LdapDeleteResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN, const std::string& diagnosticMessage) :
-			LdapResponse(messageId, LdapOperationType::DelResponse, resultCode, matchedDN, diagnosticMessage) {}
+		LdapDeleteResponseLayer(uint16_t messageId, const LdapResultCode& resultCode, const std::string& matchedDN,
+			const std::string& diagnosticMessage, const std::vector<LdapControl> controls = std::vector<LdapControl>()) :
+			LdapResponse(messageId, LdapOperationType::DelResponse, resultCode, matchedDN, diagnosticMessage, controls) {}
 
 		template <typename T, typename Member>
 		bool tryGet(Member member, T& result)
@@ -684,5 +705,12 @@ inline std::ostream& operator<<(std::ostream& os, const pcpp::LdapPartialAttribu
 		first = false;
 	}
 	os << "{" << attr.type << ", {" << valuesStream << "}}";
+	return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const pcpp::LdapControl& control)
+{
+	std::string valuesStream;
+	os << "{" << control.controlType << ", " << control.controlValue << "}";
 	return os;
 }

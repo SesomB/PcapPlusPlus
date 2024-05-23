@@ -9,6 +9,22 @@ PTF_TEST_CASE(LdapParsingTest)
 	timeval time;
 	gettimeofday(&time, nullptr);
 
+	// LDAP controls
+	{
+		READ_FILE_AND_CREATE_PACKET_LINKTYPE(1, "PacketExamples/ldap_controls1.dat", pcpp::LINKTYPE_LINUX_SLL);
+		pcpp::Packet ldapWithControlsPacket(&rawPacket1);
+
+		auto ldapLayer = ldapWithControlsPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
+		PTF_ASSERT_NOT_NULL(ldapLayer);
+
+		auto controls = ldapLayer->getControls();
+		std::vector<pcpp::LdapControl> expectedControls = {
+			{"1.2.840.113556.1.4.801", "3003020107"},
+			{"1.2.840.113556.1.4.319", "3006020201f40400"}
+		};
+		PTF_ASSERT_VECTORS_EQUAL(controls, expectedControls);
+	}
+
 	// SearchRequest
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
@@ -190,6 +206,35 @@ PTF_TEST_CASE(LdapCreationTest)
 			9, "cn=schema", pcpp::LdapSearchRequestLayer::SearchRequestScope::BaseObject,
 			pcpp::LdapSearchRequestLayer::DerefAliases::DerefAlways,
 			0, 0, false, filterBytes, attributes);
+
+		auto expectedSearchRequestLayer = searchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
+		PTF_ASSERT_NOT_NULL(expectedSearchRequestLayer);
+
+		PTF_ASSERT_BUF_COMPARE(searchRequestLayer.getData(), expectedSearchRequestLayer->getData(),
+		                       expectedSearchRequestLayer->getDataLen());
+	}
+
+	// SearchRequest with Controls
+	{
+		READ_FILE_AND_CREATE_PACKET_LINKTYPE(1, "PacketExamples/ldap_controls1.dat", pcpp::LINKTYPE_LINUX_SLL);
+		pcpp::Packet searchRequestPacket(&rawPacket1);
+
+		std::vector<uint8_t> filterBytes = {
+			0xa9, 0x39, 0x81, 0x1c, 0x32, 0x2e, 0x31, 0x36, 0x2e, 0x38, 0x34, 0x30, 0x2e, 0x31, 0x2e, 0x31,
+			0x31, 0x33, 0x37, 0x33, 0x30, 0x2e, 0x33, 0x2e, 0x33, 0x2e, 0x32, 0x2e, 0x34, 0x36, 0x2e, 0x31,
+			0x82, 0x10, 0x64, 0x65, 0x70, 0x61, 0x72, 0x74, 0x6d, 0x65, 0x6e, 0x74, 0x4e, 0x75, 0x6d, 0x62,
+			0x65, 0x72, 0x83, 0x07, 0x3e, 0x3d, 0x4e, 0x34, 0x37, 0x30, 0x39
+		};
+		std::vector<std::string> attributes = {"*", "ntsecuritydescriptor"};
+		std::vector<pcpp::LdapControl> controls = {
+			{"1.2.840.113556.1.4.801", "3003020107"},
+			{"1.2.840.113556.1.4.319", "3006020201f40400"}
+		};
+
+		pcpp::LdapSearchRequestLayer searchRequestLayer(
+			6, "DC=matrix,DC=local", pcpp::LdapSearchRequestLayer::SearchRequestScope::WholeSubtree,
+			pcpp::LdapSearchRequestLayer::DerefAliases::DerefAlways,
+			0, 0, false, filterBytes, attributes, controls);
 
 		auto expectedSearchRequestLayer = searchRequestPacket.getLayerOfType<pcpp::LdapSearchRequestLayer>();
 		PTF_ASSERT_NOT_NULL(expectedSearchRequestLayer);
