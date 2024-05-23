@@ -25,6 +25,19 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_VECTORS_EQUAL(controls, expectedControls);
 	}
 
+	// LDAP controls 2
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_controls2.dat");
+		pcpp::Packet ldapWithControlsPacket(&rawPacket1);
+
+		auto ldapLayer = ldapWithControlsPacket.getLayerOfType<pcpp::LdapLayer>();
+		PTF_ASSERT_NOT_NULL(ldapLayer);
+
+		auto controls = ldapLayer->getControls();
+		std::vector<pcpp::LdapControl> expectedControls = {{"1.3.6.1.4.1.42.2.27.8.5.1"}};
+		PTF_ASSERT_VECTORS_EQUAL(controls, expectedControls);
+	}
+
 	// SearchRequest
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
