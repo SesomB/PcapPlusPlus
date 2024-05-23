@@ -257,7 +257,6 @@ namespace pcpp
 
 	private:
 		uint8_t* m_Value = nullptr;
-		bool m_FreeValueOnDestruction = false;
 	};
 
 	/**

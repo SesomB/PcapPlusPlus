@@ -584,7 +584,6 @@ namespace pcpp {
 		m_TagClass = tagClass;
 		m_IsConstructed = isConstructed;
 		m_Value = new uint8_t[valueLen];
-		m_FreeValueOnDestruction = true;
 		memcpy(m_Value, value, valueLen);
 		m_ValueLength = valueLen;
 		m_TotalLength = m_ValueLength + 2;
@@ -592,15 +591,15 @@ namespace pcpp {
 
 	Asn1GenericRecord::~Asn1GenericRecord()
 	{
-		if (m_Value && m_FreeValueOnDestruction)
-		{
-			delete m_Value;
-		}
+		delete m_Value;
 	}
 
 	void Asn1GenericRecord::decodeValue(uint8_t* data, bool lazy)
 	{
-		m_Value = data;
+		delete m_Value;
+
+		m_Value = new uint8_t[m_ValueLength];
+		memcpy(m_Value, data, m_ValueLength);
 	}
 
 	std::vector<uint8_t> Asn1GenericRecord::encodeValue() const
@@ -653,6 +652,7 @@ namespace pcpp {
 
 	std::vector<std::string> Asn1ConstructedRecord::toStringInternal()
 	{
+		decodeValueIfNeeded();
 		std::vector<std::string> result = {Asn1Record::toStringInternal().front()};
 		for (auto subRecord : m_SubRecords)
 		{
