@@ -9,6 +9,8 @@
 #include <cstring>
 #include <cmath>
 #include <limits>
+#include <algorithm>
+#include <cctype>
 
 #if defined(_WIN32)
 #undef max
@@ -802,16 +804,44 @@ namespace pcpp {
 		m_Value = value;
 		m_ValueLength = value.size();
 		m_TotalLength = m_ValueLength + 2;
+		m_IsPrintable = true;
+	}
+
+	Asn1OctetStringRecord::Asn1OctetStringRecord(const uint8_t* value, size_t valueLength) : Asn1PrimitiveRecord(Asn1UniversalTagType::OctetString)
+	{
+		m_Value = byteArrayToHexString(value, valueLength);
+		m_ValueLength = valueLength;
+		m_TotalLength = m_ValueLength + 2;
+		m_IsPrintable = false;
 	}
 
 	void Asn1OctetStringRecord::decodeValue(uint8_t* data, bool lazy)
 	{
-		m_Value = std::string(reinterpret_cast<char*>(data), m_ValueLength);
+		auto value = reinterpret_cast<char*>(data);
+		m_IsPrintable = std::all_of(value, value + m_ValueLength, [](char c) {
+			return isprint(c);
+		});
+		if (m_IsPrintable)
+		{
+			m_Value = std::string(value, m_ValueLength);
+		}
+		else
+		{
+			m_Value = byteArrayToHexString(data, m_ValueLength);
+		}
 	}
 
 	std::vector<uint8_t> Asn1OctetStringRecord::encodeValue() const
 	{
-		return {m_Value.begin(), m_Value.end()};
+		if (m_IsPrintable)
+		{
+			return {m_Value.begin(), m_Value.end()};
+		}
+
+		auto rawValueSize = static_cast<size_t>(m_Value.size() / 2);
+		std::unique_ptr<uint8_t[]> rawValue(new uint8_t[rawValueSize]);
+		rawValueSize = hexStringToByteArray(m_Value, rawValue.get(), rawValueSize);
+		return {rawValue.get(), rawValue.get() + rawValueSize};
 	}
 
 	std::vector<std::string> Asn1OctetStringRecord::toStringInternal()

@@ -447,10 +447,17 @@ namespace pcpp
 
 	public:
 		/**
-		 * A constructor to create a record of type Octet String
+		 * A constructor to create a record of type Octet String from a printable value
 		 * @param value A string to set as the record value
 		 */
 		explicit Asn1OctetStringRecord(const std::string& value);
+
+		/**
+ 		 * A constructor to create a record of type Octet String from a non-printable value
+ 		 * @param value A byte array to set as the record value
+		 * @param valueLength The length of the byte array
+ 		*/
+		explicit Asn1OctetStringRecord(const uint8_t* value, size_t valueLength);
 
 		/**
 		 * @return The string value of this record
@@ -465,6 +472,7 @@ namespace pcpp
 
 	private:
 		std::string m_Value;
+		bool m_IsPrintable = true;
 
 		Asn1OctetStringRecord() = default;
 	};

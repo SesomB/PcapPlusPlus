@@ -136,7 +136,7 @@ PTF_TEST_CASE(Asn1DecodingTest)
 		PTF_ASSERT_EQUAL(record->toString(), "Boolean, Length: 2+1, Value: false");
 	}
 
-	// OctetString
+	// OctetString with printable value
 	{
 		uint8_t data[20];
 		auto dataLen = pcpp::hexStringToByteArray("0411737562736368656d61537562656e747279", data, 20);
@@ -149,6 +149,21 @@ PTF_TEST_CASE(Asn1DecodingTest)
 		PTF_ASSERT_EQUAL(record->getValueLength(), 17);
 		PTF_ASSERT_EQUAL(record->castAs<pcpp::Asn1OctetStringRecord>()->getValue(), "subschemaSubentry");
 		PTF_ASSERT_EQUAL(record->toString(), "OctetString, Length: 2+17, Value: subschemaSubentry");
+	}
+
+	// OctetString with non-printable value
+	{
+		uint8_t data[20];
+		auto dataLen = pcpp::hexStringToByteArray("04083006020201f40400", data, 20);
+		auto record = pcpp::Asn1Record::decode(data, dataLen);
+
+		PTF_ASSERT_EQUAL(record->getTagClass(), pcpp::Asn1TagClass::Universal, enumclass);
+		PTF_ASSERT_FALSE(record->isConstructed());
+		PTF_ASSERT_EQUAL(record->getUniversalTagType(), pcpp::Asn1UniversalTagType::OctetString, enumclass);
+		PTF_ASSERT_EQUAL(record->getTotalLength(), 10);
+		PTF_ASSERT_EQUAL(record->getValueLength(), 8);
+		PTF_ASSERT_EQUAL(record->castAs<pcpp::Asn1OctetStringRecord>()->getValue(), "3006020201f40400");
+		PTF_ASSERT_EQUAL(record->toString(), "OctetString, Length: 2+8, Value: 3006020201f40400");
 	}
 
 	// Null
@@ -452,7 +467,7 @@ PTF_TEST_CASE(Asn1EncodingTest)
 		PTF_ASSERT_BUF_COMPARE(encodedValue.data(), data, dataLen)
 	}
 
-	// OctetString
+	// OctetString with printable value
 	{
 		pcpp::Asn1OctetStringRecord record("subschemaSubentry");
 
@@ -465,6 +480,27 @@ PTF_TEST_CASE(Asn1EncodingTest)
 
 		uint8_t data[20];
 		auto dataLen = pcpp::hexStringToByteArray("0411737562736368656d61537562656e747279", data, 20);
+
+		auto encodedValue = record.encode();
+		PTF_ASSERT_EQUAL(encodedValue.size(), dataLen);
+		PTF_ASSERT_BUF_COMPARE(encodedValue.data(), data, dataLen)
+	}
+
+	// OctetString with non-printable value
+	{
+		constexpr size_t valueSize = 8;
+		uint8_t value[valueSize] = {0x30, 0x06, 0x02, 0x02, 0x01, 0xf4, 0x04, 0x00};
+		pcpp::Asn1OctetStringRecord record(value, valueSize);
+
+		PTF_ASSERT_EQUAL(record.getTagClass(), pcpp::Asn1TagClass::Universal, enumclass);
+		PTF_ASSERT_FALSE(record.isConstructed());
+		PTF_ASSERT_EQUAL(record.getUniversalTagType(), pcpp::Asn1UniversalTagType::OctetString, enumclass);
+		PTF_ASSERT_EQUAL(record.getTotalLength(), valueSize + 2);
+		PTF_ASSERT_EQUAL(record.getValueLength(), valueSize);
+		PTF_ASSERT_EQUAL(record.getValue(), "3006020201f40400");
+
+		uint8_t data[20];
+		auto dataLen = pcpp::hexStringToByteArray("04083006020201f40400", data, 20);
 
 		auto encodedValue = record.encode();
 		PTF_ASSERT_EQUAL(encodedValue.size(), dataLen);
