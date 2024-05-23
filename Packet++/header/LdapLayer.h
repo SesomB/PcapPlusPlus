@@ -403,6 +403,10 @@ namespace pcpp
 	class LdapLayer : public Layer
 	{
 	public:
+		LdapLayer(uint16_t messageId, LdapOperationType operationType,
+			const std::vector<Asn1Record*>& messageRecords,
+			const std::vector<LdapControl> controls = std::vector<LdapControl>());
+
 		~LdapLayer() {}
 
 		Asn1Record* getRawAsn1Record() const { return m_Asn1Record.get(); }
@@ -437,7 +441,7 @@ namespace pcpp
 
 		LdapLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet);
 		LdapLayer() = default;
-		void init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& , const std::vector<LdapControl> controls = std::vector<LdapControl>());
+		void init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords, const std::vector<LdapControl>& controls);
 		Asn1SequenceRecord* getAsn1Record() const;
 		Asn1ConstructedRecord* getMessageRecord() const;
 		virtual std::string getExtendedStringInfo() const {return ""; }

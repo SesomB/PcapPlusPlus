@@ -4,6 +4,11 @@
 
 namespace pcpp
 {
+	LdapLayer::LdapLayer(uint16_t messageId, LdapOperationType operationType,
+		const std::vector<Asn1Record*>& messageRecords, const std::vector<LdapControl> controls)
+	{
+		init(messageId, operationType, messageRecords, controls);
+	}
 
 	LdapLayer::LdapLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet) : Layer(data, dataLen, prevLayer, packet)
 	{
@@ -11,7 +16,7 @@ namespace pcpp
 		m_Asn1Record = std::move(asn1Record);
 	}
 
-	void LdapLayer::init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords, const std::vector<LdapControl> controls)
+	void LdapLayer::init(uint16_t messageId, LdapOperationType operationType, const std::vector<Asn1Record*>& messageRecords, const std::vector<LdapControl>& controls)
 	{
 		Asn1IntegerRecord messageIdRecord(messageId);
 		Asn1ConstructedRecord messageRootRecord(Asn1TagClass::Application, operationType, messageRecords);
@@ -90,9 +95,13 @@ namespace pcpp
 				{
 					return new LdapDeleteResponseLayer(asn1Record, data, dataLen, prevLayer, packet);
 				}
-				default:
+				case LdapOperationType::Unknown:
 				{
 					return nullptr;
+				}
+				default:
+				{
+					return new LdapLayer(asn1Record, data, dataLen, prevLayer, packet);
 				}
 			}
 		}

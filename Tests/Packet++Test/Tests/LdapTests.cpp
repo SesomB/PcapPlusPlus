@@ -243,6 +243,27 @@ PTF_TEST_CASE(LdapCreationTest)
 		                       expectedSearchRequestLayer->getDataLen());
 	}
 
+	// Generic LDAP packet with Controls
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_controls2.dat");
+		pcpp::Packet ldapPacket(&rawPacket1);
+
+		pcpp::Asn1IntegerRecord integerRecord(3);
+		pcpp::Asn1OctetStringRecord stringRecord("cn=Administrator,cn=Users,dc=cloudshark-a,dc=example,dc=com");
+		uint8_t contextSpecificData[14] = {0x63, 0x6c, 0x6f, 0x75, 0x64, 0x73, 0x68, 0x61, 0x72, 0x6b, 0x31, 0x32, 0x33, 0x21};
+		pcpp::Asn1GenericRecord contextSpecificRecord(pcpp::Asn1TagClass::ContextSpecific, false, 0, contextSpecificData, 14);
+		std::vector<pcpp::LdapControl> controls = {{"1.3.6.1.4.1.42.2.27.8.5.1"}};
+
+		pcpp::LdapLayer ldapLayer(2, pcpp::LdapOperationType::BindRequest, {&integerRecord, &stringRecord, &contextSpecificRecord}, controls);
+
+		auto expectedLdapLayer = ldapPacket.getLayerOfType<pcpp::LdapLayer>();
+		PTF_ASSERT_NOT_NULL(expectedLdapLayer);
+
+		PTF_ASSERT_BUF_COMPARE(ldapLayer.getData(), expectedLdapLayer->getData(),
+		                       expectedLdapLayer->getDataLen());
+
+	}
+
 	// SearchResultEntry
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_res_entry.dat");
