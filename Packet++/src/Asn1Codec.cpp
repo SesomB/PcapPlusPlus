@@ -72,10 +72,15 @@ namespace pcpp {
 			return result;
 		}
 
-		// Assuming the size is always less than 256
-		uint8_t firstByte = 0x80 | 0x01;
-		result.push_back(firstByte);
-		result.push_back(m_ValueLength);
+		size_t valLength = m_ValueLength;
+		do
+		{
+			result.insert(result.begin(), static_cast<uint8_t>(valLength & 0xff));
+			valLength >>= 8;
+		}
+		while (valLength != 0);
+
+		result.insert(result.begin(), 0x80 | static_cast<uint8_t>(result.size()));
 
 		return result;
 	}
@@ -799,12 +804,12 @@ namespace pcpp {
 		m_TagType = static_cast<uint8_t>(Asn1UniversalTagType::Enumerated);
 	}
 
-	Asn1OctetStringRecord::Asn1OctetStringRecord(const std::string& value) : Asn1PrimitiveRecord(Asn1UniversalTagType::OctetString)
+	Asn1OctetStringRecord::Asn1OctetStringRecord(const std::string& value, bool isHexStream) : Asn1PrimitiveRecord(Asn1UniversalTagType::OctetString)
 	{
 		m_Value = value;
-		m_ValueLength = value.size();
+		m_ValueLength = (isHexStream ? value.size() / 2 : value.size());
 		m_TotalLength = m_ValueLength + 2;
-		m_IsPrintable = true;
+		m_IsPrintable = !isHexStream;
 	}
 
 	Asn1OctetStringRecord::Asn1OctetStringRecord(const uint8_t* value, size_t valueLength) : Asn1PrimitiveRecord(Asn1UniversalTagType::OctetString)
@@ -817,13 +822,12 @@ namespace pcpp {
 
 	void Asn1OctetStringRecord::decodeValue(uint8_t* data, bool lazy)
 	{
-		auto value = reinterpret_cast<char*>(data);
-		m_IsPrintable = std::all_of(value, value + m_ValueLength, [](char c) {
-			return isprint(c);
+		m_IsPrintable = std::all_of(data, data + m_ValueLength, [](char c) {
+			return isprint(0xff & c);
 		});
 		if (m_IsPrintable)
 		{
-			m_Value = std::string(value, m_ValueLength);
+			m_Value = std::string(reinterpret_cast<char*>(data), m_ValueLength);
 		}
 		else
 		{

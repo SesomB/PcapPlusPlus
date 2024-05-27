@@ -486,6 +486,40 @@ namespace pcpp
 			const std::string& matchedDN, const std::string& diagnosticMessage, const std::vector<LdapControl> controls);
 	};
 
+	class LdapBindRequestLayer : public LdapLayer
+	{
+	public:
+		enum class AuthenticationType : uint8_t
+		{
+			Simple = 0,
+			Sasl = 3,
+			NotApplicable = 255
+		};
+
+		struct SaslAuthentication
+		{
+			std::string mechanism;
+			std::string credentials;
+		};
+
+		LdapBindRequestLayer(std::unique_ptr<Asn1Record>& asn1Record, uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet)
+			: LdapLayer(asn1Record, data, dataLen, prevLayer, packet) {}
+
+		LdapBindRequestLayer(
+			uint16_t messageId, uint8_t version, const std::string& name, const std::string& simpleAuthentication,
+			const std::vector<LdapControl> controls = std::vector<LdapControl>());
+
+		LdapBindRequestLayer(
+			uint16_t messageId, uint8_t version, const std::string& name, const SaslAuthentication& saslAuthentication,
+			const std::vector<LdapControl> controls = std::vector<LdapControl>());
+
+		uint32_t getVersion();
+		std::string getName();
+		AuthenticationType getAuthenticationType();
+		std::string getSimpleAuthentication();
+		SaslAuthentication getSaslAuthentication();
+	};
+
 	class LdapSearchRequestLayer : public LdapLayer
 	{
 	public:
@@ -591,6 +625,7 @@ namespace pcpp
 			uint16_t messageId, const std::string& baseObject, SearchRequestScope scope, DerefAliases derefAliases,
 			uint8_t sizeLimit, uint8_t timeLimit, bool typesOnly, const std::vector<uint8_t>& filter,
 			const std::vector<std::string>& attributes, const std::vector<LdapControl> controls = std::vector<LdapControl>());
+
 		std::string getBaseObject() const;
 		SearchRequestScope getScope() const;
 		DerefAliases getDerefAlias() const;

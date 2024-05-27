@@ -448,8 +448,9 @@ namespace pcpp
 		/**
 		 * A constructor to create a record of type Octet String from a printable value
 		 * @param value A string to set as the record value
+		 * @param isHexStream Indicates if the value is a hex stream or a string
 		 */
-		explicit Asn1OctetStringRecord(const std::string& value);
+		explicit Asn1OctetStringRecord(const std::string& value, bool isHexStream = false);
 
 		/**
  		 * A constructor to create a record of type Octet String from a non-printable value
