@@ -177,7 +177,22 @@ PTF_TEST_CASE(LdapParsingTest)
 		PTF_ASSERT_EQUAL(deleteResponseLayer->getDiagnosticMessage(), "");
 	}
 
-	// Test tryGet
+	// Test tryGet LdapLayer
+	{
+		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_bind_request1.dat");
+		buffer1[68] = 0x04;
+		pcpp::Packet malformedLdapPacket(&rawPacket1);
+		auto malformedLdapLayer = malformedLdapPacket.getLayerOfType<pcpp::LdapLayer>();
+		PTF_ASSERT_NOT_NULL(malformedLdapLayer);
+		uint16_t messageId;
+		PTF_ASSERT_FALSE(malformedLdapLayer->tryGet(&pcpp::LdapLayer::getMessageID, messageId));
+		std::vector<pcpp::LdapControl> controls;
+		PTF_ASSERT_TRUE(malformedLdapLayer->tryGet(&pcpp::LdapLayer::getControls, controls));
+		std::vector<pcpp::LdapControl> expectedControls = {{"1.3.6.1.4.1.42.2.27.8.5.1"}};
+		PTF_ASSERT_VECTORS_EQUAL(controls, expectedControls);
+	}
+
+	// Test tryGet LdapSearchRequestLayer
 	{
 		READ_FILE_AND_CREATE_PACKET(1, "PacketExamples/ldap_search_request.dat");
 		buffer1[127] = 0x31;

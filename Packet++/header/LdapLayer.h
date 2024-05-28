@@ -436,6 +436,12 @@ namespace pcpp
 
 		static LdapLayer* parseLdapMessage(uint8_t* data, size_t dataLen, Layer* prevLayer, Packet* packet);
 
+		template <typename T, typename Member>
+		bool tryGet(Member member, T& result)
+		{
+			return internalTryGet(this, member, result);
+		}
+
 	protected:
 		std::unique_ptr<Asn1Record> m_Asn1Record;
 
